@@ -1,1 +1,119 @@
-"Hello World" 
+<html>
+	<head>
+		<title>Ethereum Auction</title>
+	</head>
+	<body>
+
+		<h2>Ethereum Auction - Smart Contract</h2>
+		<h4>Connection:</h4>
+		<label>Account Address: </label>
+		<input type="text" id="inputAccount">
+		<br>
+		<label>Private Key: </label>
+		<input type="text" id="inputKey">
+		<br>
+		<button id="connectButton">Submit</button>
+		<br>
+		<label id="outputConnection"></label>
+		<br>
+		<h4>Contract Methods:</h4>
+		<button id="setButton">set</button>
+		<input type="text" id="inputSet">
+		<br>
+		<label id="outputSet"></label>
+		<br>
+		<br>
+		<button id="getButton">get</button>
+		<input type="text" id="inputGet">
+		<br>
+		<label id="outputGet"></label>
+		<p>Valor Atual:</p>
+		<label id="lastBid"></label>
+		<br>
+		<p>Blocos para acabar:</p>
+		<label id="blocksToFinish"></label>
+		<br>
+		<h2>Account: <span class="showAccount"></span></h2>
+		<button class="enableEthereumButton btn">Enable Ethereum</button>
+		<button class="sendNewLot btn">New Lot</button>
+		<button class="getLastLot btn">Last Lot</button>
+	</body>
+
+	<script src="bundle.js"></script>
+ 	<script>
+  	
+		var vetor = [];
+		var servidorWebserver;
+		var websocket;
+		var botaoConnect = O('connectButton');
+		var botaoGet = O('getButton');
+		var botaoSet = O('setButton');
+
+		servidorWebserver = 'ws://' + window.location.hostname + ':8080';
+
+		function startConnection() {		
+			websocket = new WebSocket(servidorWebserver);
+			websocket.onopen = function(evt) {	
+				onOpen(evt)
+			}
+			websocket.onclose = function(evt) {	
+				onClose(evt)
+			}
+			websocket.onmessage = function(evt) {	
+				onMessage(evt)
+			}
+		}
+
+		function onOpen(env) {
+			let MSG = {tipo : 'STARTED'};
+			websocket.send(JSON.stringify(MSG));
+		}
+
+		function onClose(evt) {
+			websocket.close();
+		}
+
+		function onMessage(evt) {
+			var msg = evt.data
+			msg = JSON.parse(msg);
+			switch (msg.tipo) {
+				case 'connectionReturn':
+					O('outputConnection').innerText = msg.valor
+					break
+				case 'getReturn':
+					O('outputGet').innerText = msg.valor
+					break
+				case 'setReturn':
+					O('outputSet').innerText = msg.valor
+					break
+				case 'update':
+					O('lastBid').innerText = msg.valor.bid
+					O('blocksToFinish').innerText = msg.valor.blocks
+					break
+			}
+		}
+
+		function O(idElement) {
+			return document.getElementById(idElement);
+		}
+
+
+		// Buttons events
+		botaoConnect.addEventListener('click', function(){
+			let MSG = {tipo : 'CONNECTION', account: O('inputAccount').value, privateKey: O('inputKey').value};
+			websocket.send(JSON.stringify(MSG));
+		}, false);
+
+		botaoGet.addEventListener('click', function() {
+			let MSG = {tipo : 'GET', valor : O('inputGet').value};
+			websocket.send(JSON.stringify(MSG));
+		}, false);
+
+		botaoSet.addEventListener('click', function() {
+			let MSG = {tipo : 'SET', valor : O('inputSet').value};
+			websocket.send(JSON.stringify(MSG));
+		}, false);
+
+		startConnection();
+	</script>
+</html>
