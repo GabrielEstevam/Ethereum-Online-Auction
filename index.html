@@ -1,42 +1,47 @@
 <html>
 	<head>
-		<title>Ethereum Auction</title>
+		<title>Ethereum Online Auction</title>
 	</head>
 	<body>
 
-		<h2>Ethereum Auction - Smart Contract</h2>
-		<h4>Connection:</h4>
-		<label>Account Address: </label>
-		<input type="text" id="inputAccount">
+		<h2>Ethereum Online Auction - Smart Contract</h2>
+		<h4>Conexão Metamask:</h4>
+		<button class="buttonMetamask btn">Permitir conexão</button>
+		<label id="labelMetamaskConnection"></label>
+		<h4>Inserir Novo Lote:</h4>
+		<label>Nome do Lote: </label>
+		<input type="text" id="inputLotName">
 		<br>
-		<label>Private Key: </label>
-		<input type="text" id="inputKey">
+		<label>Lance Inicial: </label>
+		<input type="text" id="inputInitialBid">
+		<label>gwei</label>
 		<br>
-		<button id="connectButton">Submit</button>
-		<br>
-		<label id="outputConnection"></label>
-		<br>
-		<h4>Contract Methods:</h4>
-		<button id="setButton">set</button>
-		<input type="text" id="inputSet">
-		<br>
-		<label id="outputSet"></label>
+		<label>Duração em blocos: </label>
+		<input type="text" id="inputBlocks">
 		<br>
 		<br>
-		<button id="getButton">get</button>
-		<input type="text" id="inputGet">
+		<button class="buttonNewLot btn">Enviar</button>
 		<br>
-		<label id="outputGet"></label>
-		<p>Valor Atual:</p>
-		<label id="lastBid"></label>
+		<h4>Acompanhar lote:</h4>
+		<label>Nome do Lote: </label>
+		<input type="text" id="inputLotName2">
 		<br>
-		<p>Blocos para acabar:</p>
-		<label id="blocksToFinish"></label>
 		<br>
-		<h2>Account: <span class="showAccount"></span></h2>
-		<button class="enableEthereumButton btn">Enable Ethereum</button>
-		<button class="sendNewLot btn">New Lot</button>
-		<button class="getLastLot btn">Last Lot</button>
+		<label>Lance atual:</label>
+		<label id="labelBid"></label>
+		<br>
+		<label>Blocos para o fim: </label>
+		<label id="labelBlocks"></label>
+		<br>
+		<br>
+		<label>Lance: </label>
+		<input type="text" id="inputBitValue">
+		<label>gwei</label>
+		<button class="buttonBid btn">Enviar</button>
+		<h4>Sacar valor recebido:</h4>
+		<label>Nome do Lote: </label>
+		<input type="text" id="inputLotName3">
+		<button class="buttonWithdraw btn">Solicitar</button>
 	</body>
 
 	<script src="bundle.js"></script>

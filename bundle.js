@@ -32761,19 +32761,27 @@ function extend() {
 const Eth = require('ethjs-query')
 const EthContract = require('ethjs-contract')
 
-const address = '0x138dA5d3A00e2d11e5aDfBd55d7c129852496707'
+const address = '0xEB02ae65644E9284593B9cF17Fdf3831971dB0e9'
 const abi = [
 	{
 		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
+		"name": "getBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "indexLot",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
 			}
 		],
 		"name": "getLastBidLot",
@@ -32788,24 +32796,11 @@ const abi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "getLastLotIndex",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "indexLot",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
 			}
 		],
 		"name": "getRemaingBlocks",
@@ -32822,9 +32817,9 @@ const abi = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "indexLot",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
 			}
 		],
 		"name": "getUserAdress",
@@ -32841,26 +32836,31 @@ const abi = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "indexLot",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_bid",
-				"type": "uint256"
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
 			}
 		],
 		"name": "newBid",
 		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
 		"inputs": [
 			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
 				"internalType": "uint256",
-				"name": "_bid",
+				"name": "initialBid",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "blocks",
 				"type": "uint256"
 			}
 		],
@@ -32868,16 +32868,29 @@ const abi = [
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	}
 ]
-
 const Web3 = require('web3')
 const web3_1 = new Web3()
 const contract = new web3_1.eth.Contract(abi, address)
 
-const ethereumButton = document.querySelector('.enableEthereumButton')
-const sendNewLotButton = document.querySelector('.sendNewLot')
-const getLastLot = document.querySelector('.getLastLot')
+const buttonMetamask = document.querySelector('.buttonMetamask')
+const buttonNewLot = document.querySelector('.buttonNewLot')
+const buttonBid = document.querySelector('.buttonBid')
+const buttonWithdraw = document.querySelector('.buttonWithdraw')
 
 let accounts = []
 
@@ -32885,17 +32898,22 @@ function startApp(web3_2) {
   const eth = new Eth(web3_2.currentProvider)
   const contract = new EthContract(eth)
   const EthereumAuction = contract(abi)
-  const ethereumAuction = EthereumAuction.at(address)
-  listenForClicks(ethereumAuction)
-}
-
-function listenForClicks (ethereumAuction) {
-  getLastLot.addEventListener('click', function() {
-    ethereumAuction.getLastLotIndex.call().then((receipt)=>{
-      alert('result: ' + receipt[0].words[0])
-    })
-    .catch(console.error)
-  })
+	const ethereumAuction = EthereumAuction.at(address)
+	setInterval(function(){
+		let lotName = document.getElementById('inputLotName2').value
+		console.log(lotName)
+		if (lotName != "") {
+			ethereumAuction.getLastBidLot(lotName).then((receipt)=>{
+				console.log(receipt[0])
+				document.getElementById('labelBid').innerText = receipt[0].words[0] + ' gwei'
+			})
+			.catch(console.error)
+			ethereumAuction.getRemaingBlocks(lotName).then((receipt)=>{
+				document.getElementById('labelBlocks').innerText = receipt[0].words[0]
+			})
+			.catch(console.error)
+		}
+	}, 5000)
 }
 
 window.addEventListener('load', function() {
@@ -32911,8 +32929,11 @@ window.addEventListener('load', function() {
 
 //==================================================================
 
-//Sending new not to an address
-sendNewLotButton.addEventListener('click', () => {
+//Sending new lot to an address
+buttonNewLot.addEventListener('click', () => {
+	let lotName = document.getElementById('inputLotName').value
+	let initialBid = document.getElementById('inputInitialBid').value
+	let blocks = document.getElementById('inputBlocks').value
   ethereum.sendAsync(
     {
       method: 'eth_sendTransaction',
@@ -32920,9 +32941,10 @@ sendNewLotButton.addEventListener('click', () => {
         {
           from: accounts[0],
           to: address,
-          gasLimit: web3_1.utils.toHex(100000), // Raise the gas limit to a much higher amount
-				  gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
-          data: contract.methods.newLot(10).encodeABI()
+          gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
+					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
+					value: web3_1.utils.toHex(0),
+					data: contract.methods.newLot(lotName, initialBid*1000000000, blocks).encodeABI()
         },
       ],
     },
@@ -32930,16 +32952,72 @@ sendNewLotButton.addEventListener('click', () => {
       if (err) console.error(err);
       else console.log(result);
     }
-  )
+	)
+	document.getElementById('inputLotName').value = ''
+	document.getElementById('inputInitialBid').value = ''
+	document.getElementById('inputBlocks').value = ''
 })
 
-ethereumButton.addEventListener('click', () => {
+//Sending new bid to lot
+buttonBid.addEventListener('click', () => {
+	let lotName = document.getElementById('inputLotName2').value
+	let bidValue = document.getElementById('inputBitValue').value
+  ethereum.sendAsync(
+    {
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: accounts[0],
+          to: address,
+          gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
+					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
+					value: web3_1.utils.toHex(web3_1.utils.toWei(bidValue, 'gwei')),
+					data: contract.methods.newBid(lotName).encodeABI()
+        },
+      ],
+    },
+    (err, result) => {
+      if (err) console.error(err);
+      else console.log(result);
+    }
+	)
+	document.getElementById('inputBitValue').value = ''
+})
+
+// Request withdraw
+buttonWithdraw.addEventListener('click', () => {
+	let lotName = document.getElementById('inputLotName3').value
+  ethereum.sendAsync(
+    {
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: accounts[0],
+          to: address,
+          gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
+					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
+					data: contract.methods.withdraw(lotName).encodeABI()
+        },
+      ],
+    },
+    (err, result) => {
+      if (err) console.error(err);
+      else console.log(result);
+    }
+	)
+	document.getElementById('inputLotName3').value = ''
+})
+
+buttonMetamask.addEventListener('click', () => {
   getAccount()
 })
 
 async function getAccount() {
-  accounts = await ethereum.enable();
+	accounts = await ethereum.enable()
+	document.getElementById('labelMetamaskConnection').innerText = "Ativo com endereço: " + accounts[0]
 }
+
+
 },{"ethjs-contract":497,"ethjs-query":503,"web3":700}],229:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
