@@ -32761,8 +32761,52 @@ function extend() {
 const Eth = require('ethjs-query')
 const EthContract = require('ethjs-contract')
 
-const address = '0xEB02ae65644E9284593B9cF17Fdf3831971dB0e9'
+const address = '0xb4F5ecDeC517Aec7853eBc52b74A8b3E779b8537'
 const abi = [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
+			}
+		],
+		"name": "newBid",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "blocks",
+				"type": "uint256"
+			}
+		],
+		"name": "newLot",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"inputs": [],
 		"name": "getBalance",
@@ -32790,6 +32834,38 @@ const abi = [
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getLotLength",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getLotList",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -32832,55 +32908,6 @@ const abi = [
 		],
 		"stateMutability": "view",
 		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "lotName",
-				"type": "string"
-			}
-		],
-		"name": "newBid",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "initialBid",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "blocks",
-				"type": "uint256"
-			}
-		],
-		"name": "newLot",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "lotName",
-				"type": "string"
-			}
-		],
-		"name": "withdraw",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	}
 ]
 const Web3 = require('web3')
@@ -32901,11 +32928,9 @@ function startApp(web3_2) {
 	const ethereumAuction = EthereumAuction.at(address)
 	setInterval(function(){
 		let lotName = document.getElementById('inputLotName2').value
-		console.log(lotName)
 		if (lotName != "") {
 			ethereumAuction.getLastBidLot(lotName).then((receipt)=>{
-				console.log(receipt[0])
-				document.getElementById('labelBid').innerText = receipt[0].words[0] + ' gwei'
+				document.getElementById('labelBid').innerText = receipt[0].words[0] + ' ether'
 			})
 			.catch(console.error)
 			ethereumAuction.getRemaingBlocks(lotName).then((receipt)=>{
@@ -32914,6 +32939,20 @@ function startApp(web3_2) {
 			.catch(console.error)
 		}
 	}, 5000)
+	setInterval(function(){
+		ethereumAuction.getLotLength().then((receipt)=>{
+			let len = receipt[0].words[0]
+			for (let i = len-1; i >= (len-10); i--) {
+				if (i < 0)
+					break
+				ethereumAuction.getLotList(i).then((receipt)=>{
+					document.getElementById('labelL'+(len-i)).innerText = receipt[0]
+				})
+				.catch(console.error)
+			}
+		})
+		.catch(console.error)
+	}, 20000)
 }
 
 window.addEventListener('load', function() {
@@ -32932,7 +32971,6 @@ window.addEventListener('load', function() {
 //Sending new lot to an address
 buttonNewLot.addEventListener('click', () => {
 	let lotName = document.getElementById('inputLotName').value
-	let initialBid = document.getElementById('inputInitialBid').value
 	let blocks = document.getElementById('inputBlocks').value
   ethereum.sendAsync(
     {
@@ -32944,17 +32982,20 @@ buttonNewLot.addEventListener('click', () => {
           gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
 					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
 					value: web3_1.utils.toHex(0),
-					data: contract.methods.newLot(lotName, initialBid*1000000000, blocks).encodeABI()
+					data: contract.methods.newLot(lotName, blocks).encodeABI()
         },
       ],
     },
     (err, result) => {
-      if (err) console.error(err);
-      else console.log(result);
+      if (err) {
+				console.error(err)
+			} else {
+				document.getElementById('linkNewLot').href = "https://ropsten.etherscan.io/tx/" + result.result
+				document.getElementById('linkNewLot').innerText = result.result
+			}
     }
 	)
 	document.getElementById('inputLotName').value = ''
-	document.getElementById('inputInitialBid').value = ''
 	document.getElementById('inputBlocks').value = ''
 })
 
@@ -32971,14 +33012,18 @@ buttonBid.addEventListener('click', () => {
           to: address,
           gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
 					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
-					value: web3_1.utils.toHex(web3_1.utils.toWei(bidValue, 'gwei')),
+					value: web3_1.utils.toHex(web3_1.utils.toWei(bidValue, 'ether')),
 					data: contract.methods.newBid(lotName).encodeABI()
         },
       ],
     },
     (err, result) => {
-      if (err) console.error(err);
-      else console.log(result);
+      if (err) {
+				console.error(err)
+			} else {
+				document.getElementById('linkNewBid').href = "https://ropsten.etherscan.io/tx/" + result.result
+				document.getElementById('linkNewBid').innerText = result.result
+			}
     }
 	)
 	document.getElementById('inputBitValue').value = ''
@@ -33001,8 +33046,12 @@ buttonWithdraw.addEventListener('click', () => {
       ],
     },
     (err, result) => {
-      if (err) console.error(err);
-      else console.log(result);
+      if (err) {
+				console.error(err)
+			} else {
+				document.getElementById('linkWithdraw').href = "https://ropsten.etherscan.io/tx/" + result.result
+				document.getElementById('linkWithdraw').innerText = result.result
+			}
     }
 	)
 	document.getElementById('inputLotName3').value = ''
