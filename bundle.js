@@ -32758,7 +32758,11 @@ function extend() {
 }
 
 },{}],228:[function(require,module,exports){
-const address = '0x2B23b51a8454C2145F0FA838Aa3C0098037a6b02'
+const Web3 = require('web3')
+const web3_1 = new Web3()
+let contract = ""
+
+const address = '0x9A23d67F1C5D53277479c6698C6353816ed193e0'
 const abi = [
 	{
 		"inputs": [
@@ -32806,6 +32810,19 @@ const abi = [
 	},
 	{
 		"inputs": [],
+		"name": "getActivesLots",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "getBalance",
 		"outputs": [
 			{
@@ -32843,7 +32860,7 @@ const abi = [
 	},
 	{
 		"inputs": [],
-		"name": "getLotList",
+		"name": "getPendentLots",
 		"outputs": [
 			{
 				"internalType": "string[]",
@@ -32874,9 +32891,6 @@ const abi = [
 		"type": "function"
 	}
 ]
-const Web3 = require('web3')
-const web3_1 = new Web3()
-let contract = ""
 
 //const buttonMetamask = document.querySelector('.buttonMetamask')
 const buttonNewLot = document.querySelector('.buttonNewLot')
@@ -33014,7 +33028,7 @@ function refreshLot() {
 	let lotName = document.getElementById('inputLotName2').value
 	if (lotName != "") {
 		contract.methods.getLotData(lotName).call().then((receipt)=>{
-			document.getElementById('labelBid').innerText = receipt[1] + ' ether'
+			document.getElementById('labelBid').innerText = receipt[1]/1000 + ' ether'
 			document.getElementById('labelBlocks').innerText = receipt[0]
 		})
 		.catch(console.error)
@@ -33028,7 +33042,7 @@ dropboxLotBit.addEventListener('click', () => {
 
 // Refresh lots list
 refreshLots.addEventListener('click', () => {
-	contract.methods.getLotList().call().then((receipt) => {
+	contract.methods.getActivesLots().call().then((receipt) => {
 		let dropboxLen = dropboxLotBit.options.length
 		for (let i = dropboxLen-1; i >= 0; i--)
 			dropboxLotBit.remove(i)
@@ -33045,7 +33059,8 @@ refreshLots.addEventListener('click', () => {
 
 // Refresh lots withdraw
 refreshLots2.addEventListener('click', () => {
-	contract.methods.getLotList().call().then((receipt) => {
+	contract.methods.getPendentLots().call({from: accounts[0]}).then((receipt) => {
+		console.log(receipt)
 		let dropboxLen = dropboxLotBit2.options.length
 		for (let i = dropboxLen-1; i >= 0; i--)
 			dropboxLotBit2.remove(i)
