@@ -32762,7 +32762,10 @@ const Web3 = require('web3')
 const web3_1 = new Web3()
 let contract = ""
 
-const address = '0x9A23d67F1C5D53277479c6698C6353816ed193e0'
+const addressRopsten = '0x9A23d67F1C5D53277479c6698C6353816ed193e0'
+const addressRinkeby = '0x6Ad69f91D2bbdA9442774C30d4f0354f0E9FB18F'
+let address = ''
+let network = ''
 const abi = [
 	{
 		"inputs": [
@@ -32909,7 +32912,17 @@ window.addEventListener('load', function() {
 		if (window.web3) {
 			window.web3 = new Web3(window.web3.currentProvider)
 			//window.ethereum.enable()
-			contract = new window.web3.eth.Contract(abi, address)
+			window.web3.eth.net.getNetworkType().then((receipt) => {
+				network = receipt
+				if (receipt == 'ropsten') {
+					address = addressRopsten
+				} else if (receipt == 'rinkeby') {
+					address = addressRinkeby
+				} else {
+					console.log('Rede não suportada.')
+				}
+				contract = new window.web3.eth.Contract(abi, address)
+			})
 			getAccount()
 		}
 		setInterval(function(){
@@ -32942,7 +32955,7 @@ buttonNewLot.addEventListener('click', () => {
       if (err) {
 				console.error(err)
 			} else {
-				document.getElementById('linkNewLot').href = "https://ropsten.etherscan.io/tx/" + result.result
+				document.getElementById('linkNewLot').href = "https://"+network+".etherscan.io/tx/" + result.result
 				document.getElementById('labelTxNewLot').innerText = 'Link para a transação no Etherscan:'
 				document.getElementById('linkNewLot').innerText = result.result
 			}
@@ -32974,7 +32987,7 @@ buttonBid.addEventListener('click', () => {
       if (err) {
 				console.error(err)
 			} else {
-				document.getElementById('linkNewBid').href = "https://ropsten.etherscan.io/tx/" + result.result
+				document.getElementById('linkNewBid').href = "https://"+network+".etherscan.io/tx/" + result.result
 				document.getElementById('labelTxNewBid').innerText = 'Link para a transação no Etherscan:'
 				document.getElementById('linkNewBid').innerText = result.result
 			}
@@ -33003,7 +33016,7 @@ buttonWithdraw.addEventListener('click', () => {
       if (err) {
 				console.error(err)
 			} else {
-				document.getElementById('linkWithdraw').href = "https://ropsten.etherscan.io/tx/" + result.result
+				document.getElementById('linkWithdraw').href = "https://"+network+".etherscan.io/tx/" + result.result
 				document.getElementById('labelTxWithdraw').innerText = 'Link para a transação no Etherscan:'
 				document.getElementById('linkWithdraw').innerText = result.result
 			}
@@ -33060,7 +33073,6 @@ refreshLots.addEventListener('click', () => {
 // Refresh lots withdraw
 refreshLots2.addEventListener('click', () => {
 	contract.methods.getPendentLots().call({from: accounts[0]}).then((receipt) => {
-		console.log(receipt)
 		let dropboxLen = dropboxLotBit2.options.length
 		for (let i = dropboxLen-1; i >= 0; i--)
 			dropboxLotBit2.remove(i)
