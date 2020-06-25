@@ -32762,7 +32762,7 @@ const Web3 = require('web3')
 const web3_1 = new Web3()
 let contract = ""
 
-const addressRopsten = '0x9A23d67F1C5D53277479c6698C6353816ed193e0'
+const addressRopsten = '0x54C7265AB94960063d40Ba530d3522498400deb8'
 const addressRinkeby = '0x6Ad69f91D2bbdA9442774C30d4f0354f0E9FB18F'
 let address = ''
 let network = ''
@@ -32784,6 +32784,24 @@ const abi = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "lotName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_bid",
+				"type": "uint256"
+			}
+		],
+		"name": "newBidInvertedLot",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "name",
 				"type": "string"
 			},
@@ -32796,6 +32814,24 @@ const abi = [
 		"name": "newLot",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "blocks",
+				"type": "uint256"
+			}
+		],
+		"name": "newLotInverted",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -32856,6 +32892,16 @@ const abi = [
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -32903,6 +32949,9 @@ const refreshLots = document.querySelector('.buttonRefreshLots')
 const refreshLots2 = document.querySelector('.buttonRefreshLots2')
 const dropboxLotBit = document.getElementById('inputLotName2')
 const dropboxLotBit2 = document.getElementById('inputLotName3')
+const checkInvert = document.getElementById('checkInvert')
+const labelInitialBid = document.getElementById('labelInitialBid')
+const inputInitialBid = document.getElementById('inputInitialBid')
 
 let accounts = []
 
@@ -32937,6 +32986,15 @@ window.addEventListener('load', function() {
 buttonNewLot.addEventListener('click', () => {
 	let lotName = document.getElementById('inputLotName').value
 	let blocks = document.getElementById('inputBlocks').value
+	let inverted = checkInvert.checked
+	let _value = 0
+	let _data = ""
+	if (inverted) {
+		_value = web3_1.utils.toHex(web3_1.utils.toWei(inputInitialBid.value, 'ether'))
+		_data = contract.methods.newLotInverted(lotName, blocks).encodeABI()
+	} else {
+		_data = contract.methods.newLot(lotName, blocks).encodeABI()
+	}
   ethereum.sendAsync(
     {
       method: 'eth_sendTransaction',
@@ -32946,8 +33004,8 @@ buttonNewLot.addEventListener('click', () => {
           to: address,
           gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
 					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
-					value: web3_1.utils.toHex(0),
-					data: contract.methods.newLot(lotName, blocks).encodeABI()
+					value: _value,
+					data: _data
         },
       ],
     },
@@ -32969,6 +33027,15 @@ buttonNewLot.addEventListener('click', () => {
 buttonBid.addEventListener('click', () => {
 	let lotName = document.getElementById('inputLotName2').value
 	let bidValue = document.getElementById('inputBitValue').value
+	let inverted = document.getElementById('labelInverted').innerText
+	let _value = 0
+	let _data = ""
+	if (inverted == 'Sim') {
+		_data = contract.methods.newBidInvertedLot(lotName, parseInt(bidValue*1000)).encodeABI()
+	} else {
+		_value = web3_1.utils.toHex(web3_1.utils.toWei(bidValue, 'ether'))
+		_data = contract.methods.newBid(lotName).encodeABI()
+	}
   ethereum.sendAsync(
     {
       method: 'eth_sendTransaction',
@@ -32978,8 +33045,8 @@ buttonBid.addEventListener('click', () => {
           to: address,
           gasLimit: web3_1.utils.toHex(200000), // Raise the gas limit to a much higher amount
 					gasPrice: web3_1.utils.toHex(web3_1.utils.toWei('10', 'gwei')),
-					value: web3_1.utils.toHex(web3_1.utils.toWei(bidValue, 'ether')),
-					data: contract.methods.newBid(lotName).encodeABI()
+					value: _value,
+					data: _data
         },
       ],
     },
@@ -33036,13 +33103,19 @@ async function getAccount() {
 	document.getElementById('labelMetamaskConnection').innerText = "Ativo com endereço: " + accounts[0]
 }
 
-// Refresh lot bid and blocks to end
+// Refresh lot bid
 function refreshLot() {
 	let lotName = document.getElementById('inputLotName2').value
 	if (lotName != "") {
 		contract.methods.getLotData(lotName).call().then((receipt)=>{
 			document.getElementById('labelBid').innerText = receipt[1]/1000 + ' ether'
 			document.getElementById('labelBlocks').innerText = receipt[0]
+			if (receipt[2]) {
+				document.getElementById('labelInverted').innerText = 'Sim'
+			} else {
+				document.getElementById('labelInverted').innerText = 'Não'
+			}
+			document.getElementById('labelBy').innerText = receipt[3]
 		})
 		.catch(console.error)
 	}
@@ -33087,6 +33160,16 @@ refreshLots2.addEventListener('click', () => {
 	.catch(console.log)
 })
 
+// Check Button Invert Event
+checkInvert.addEventListener('click', () => {
+	if (checkInvert.checked == true) {
+		labelInitialBid.style.visibility = 'visible'
+		inputInitialBid.style.visibility = 'visible'
+	} else {
+		labelInitialBid.style.visibility = 'hidden'
+		inputInitialBid.style.visibility = 'hidden'
+	}
+})
 },{"web3":595}],229:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
