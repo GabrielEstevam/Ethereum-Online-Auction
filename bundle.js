@@ -32762,8 +32762,8 @@ const Web3 = require('web3')
 const web3_1 = new Web3()
 let contract = ""
 
-const addressRopsten = '0x63Bd34Dd36B1D6c0861a550775F8314bF76a02C4'
-const addressRinkeby = '0x34EEb7ccF29F74042De292AdB691bEF15d9503D2'
+const addressRopsten = '0xeDc301c89A052Ab1C851c043cD0374e86617883C'
+const addressRinkeby = '0x8594db30117E5B64477957aE5A91743618A8C72f'
 let address = ''
 let network = ''
 const abi = [
